@@ -1,91 +1,74 @@
 class TicTacToe
-    attr_accessor :board
-
-    WIN_COMBINATIONS =  [[0,1,2], [3,4,5], [6,7,8], [0,3,6], [1,4,7], [2,5,8], [0,4,8], [6,4,2]]
-
-    def initialize
-        @board = [" "," "," "," "," "," "," "," "," "]
-
+  def initialize
+    @board = Array.new(3) { Array.new(3, " ") }
+    @current_player = "X"
+  end
+  
+  def print_board
+    @board.each_with_index do |row, index|
+      puts row.join(" | ")
+      puts "---------" unless index == 2
     end
-
-    # HELPER METHODS
-
-    def display_board
-        puts " #{@board[0]} | #{@board[1]} | #{@board[2]} "
-        puts "-----------"
-        puts " #{@board[3]} | #{@board[4]} | #{@board[5]} "
-        puts "-----------"
-        puts " #{@board[6]} | #{@board[7]} | #{@board[8]} "
-    end
-
-    def input_to_index(num_str)
-        num_str.to_i - 1
-    end
-
-    def move(index, token = "X")
-        @board[index] = token
-    end
-
-    def position_taken?(index)
-        @board[index] != " "
-    end
-
-    def valid_move?(index)
-        index.between?(0, 8) && !position_taken?(index)
-    end
-
-    def turn_count
-        @board.count{|square| square != " "} 
-    end
-
-    def current_player
-        turn_count.even? ? "X" : "O"
-    end
-
-    def turn
-        puts "Please enter a number (1-9):"
-        user_input = gets.strip
-        index = input_to_index(user_input)
-        if valid_move?(index)
-            token = current_player
-            move(index, token)
-        else
-            turn
+  end
+  
+  def play
+    loop do
+      print_board
+      puts "Player #{@current_player}, please enter a row (0-2):"
+      row = gets.chomp.to_i
+      puts "Player #{@current_player}, please enter a column (0-2):"
+      col = gets.chomp.to_i
+      
+      if @board[row][col] == " "
+        @board[row][col] = @current_player
+        if game_over?
+          print_board
+          puts "Game over! Player #{@current_player} wins!"
+          return
         end
-        display_board
+        switch_player
+      else
+        puts "That spot is already taken! Please choose another one."
+      end
     end
-
-    def won?
-        WIN_COMBINATIONS.any? do |combo|
-            if position_taken?(combo[0]) && @board[combo[0]] == @board[combo[1]] && @board[combo[1]] == @board[combo[2]]
-                return combo
-            end
-        end
+  end
+  
+  private
+  
+  def switch_player
+    @current_player = @current_player == "X" ? "O" : "X"
+  end
+  
+  def game_over?
+    # Check rows
+    @board.each do |row|
+      return true if row.uniq.length == 1 && row[0] != " "
     end
-
-    def full?
-        @board.all? {|square| square != " "}
+    
+    # Check columns
+    (0..2).each do |col|
+      column = @board.map { |row| row[col] }
+      return true if column.uniq.length == 1 && column[0] != " "
     end
-
-    def draw?
-        full? && !won?
+    
+    # Check diagonals
+    diagonal1 = [@board[0][0], @board[1][1], @board[2][2]]
+    diagonal2 = [@board[0][2], @board[1][1], @board[2][0]]
+    return true if diagonal1.uniq.length == 1 && diagonal1[0] != " "
+    return true if diagonal2.uniq.length == 1 && diagonal2[0] != " "
+    
+    # Check if there are any empty spaces left
+    @board.each do |row|
+      return false if row.include?(" ")
     end
-
-    def over?
-        won? || draw?
-    end
-
-    def winner
-        if combo = won?
-            @board[combo[0]]
-        end
-    end
-
-    # GAME METHODS
-
-    def play
-        turn until over?
-        puts winner ? "Congratulations #{winner}!" : "Cat's Game!"
-    end
-
+    
+    # If there are no empty spaces left, the game is a tie
+    print_board
+    puts "Game over! It's a tie!"
+    return true
+  end
 end
+
+game = TicTacToe.new
+game.play
+
